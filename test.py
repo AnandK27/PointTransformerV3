@@ -14,15 +14,15 @@ import torch.nn as nn
 from torchvision import transforms
 from tensorboardX import SummaryWriter
 
-from ..EPT.dataset import IntrADataset
-from ..EPT.dataset import data_utils as d_utils
+from dataset import IntrADataset
+from dataset import data_utils as d_utils
 
-from ..EPT.utils import config
-from ..EPT.utils.tools import cal_IoU_Acc_batch, get_contra_loss, record_statistics
+from utils import config
+from utils.tools import cal_IoU_Acc_batch, get_contra_loss, record_statistics
 
-from ..EPT.dataset import IntrADataset
+from dataset import IntrADataset
 
-from model import PointTransformerV3
+from PointTransformerV3.model import PointTransformerV3
 
 
 def get_parser():
@@ -242,7 +242,24 @@ def val_one_epoch(val_loader, model):
 
 
 if __name__ == "__main__":
-    global args, logger, writer
+
+    global args, logger
+    args = get_parser()
+    if args.manual_seed is not None:
+        random.seed(args.manual_seed)
+        np.random.seed(args.manual_seed)
+        torch.manual_seed(args.manual_seed)
+        torch.cuda.manual_seed(args.manual_seed)
+        torch.cuda.manual_seed_all(args.manual_seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+    args.ngpus_per_node = len(args.train_gpu)
+
+    logger = get_logger()
+    logger.info(args)
+
+
+    global writer
     test_fold = 1
 
     fold_path = os.path.join(args.save_path, "fold{}".format(test_fold))
