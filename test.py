@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
     logger.info("=====================> Creating model ...")
     if args.arch == 'IntrA_pointtransformer_seg_repro':
-        from ..EPT.models.point_transformer_seg import PointTransformerSemSegmentation as Model
+        from models.point_transformer_seg import PointTransformerSemSegmentation as Model
     else:
         raise Exception('architecture {} not supported yet'.format(args.arch))
     model = Model(args=args).cuda()
