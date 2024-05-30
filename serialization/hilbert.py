@@ -175,6 +175,8 @@ def encode(locs, num_dims, num_bits):
             gray[:, 0, bit + 1 :] = torch.logical_xor(gray[:, 0, bit + 1 :], to_flip)
 
     # Now flatten out.
+    print(num_bits)
+    print(num_dims)
     print(num_bits * num_dims)
     print(gray.shape)
     gray = gray.swapaxes(1, 2).reshape((-1, num_bits * num_dims))
