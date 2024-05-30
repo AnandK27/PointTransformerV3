@@ -311,7 +311,12 @@ if __name__ == "__main__":
 
     logger.info("=====================> Training loop...")
 
-    data_dict, g_mat, idxs = next(iter(train_loader))
+    norms, coords, labels, g_mat, idxs = next(iter(train_loader))
+
+    batches = np.arange(norms.shape[0])
+    batches = np.tile(batches, (norms.shape[1], 1)).T.flatten()
+
+    data_dict = {'batch': batches, 'feat': norms.flatten(end_dim=1), 'grid_coord': coords.flatten(end_dim=1), 'labels': labels.flatten()}
     results = ptv3_model(data_dict)
 
     print(results)
