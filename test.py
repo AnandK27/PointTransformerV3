@@ -307,7 +307,7 @@ if __name__ == "__main__":
                             shuffle=True, num_workers=args.num_workers, pin_memory=True, drop_last=True)
         #val_data = IntrADataset.IntrADataset_PTv3(args.data_root, args.sample_points, args.use_uniform_sample, args.use_normals, test_fold=test_fold, num_edge_neighbor=args.num_edge_neighbor, mode='test', transform=None)
         #val_loader = DataLoader(val_data, batch_size=args.batch_size_val,shuffle=False, num_workers=args.num_workers, pin_memory=True, drop_last=False)
-    logger.info("=> Loaded {} training samples, {} testing samples".format(len(train_data), len(val_data)))
+    logger.info("=> Loaded {} training samples, {} testing samples".format(len(train_data), len(train_data)))
 
     logger.info("=====================> Training loop...")
 
