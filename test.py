@@ -316,5 +316,7 @@ if __name__ == "__main__":
     data_dict, g_mat, idxs = next(iter(train_loader))
     results = ptv3_model(data_dict)
 
+    print(results)
+
 
 
