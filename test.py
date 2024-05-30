@@ -317,6 +317,8 @@ if __name__ == "__main__":
     batches = np.tile(batches, (norms.shape[1], 1)).T.flatten()
     batches = torch.tensor(batches).long()
 
+    print(coords.shape)
+
     data_dict = {'batch': batches, 'feat': norms.flatten(end_dim=1), 'grid_coord': coords.flatten(end_dim=1), 'labels': labels.flatten()}
     results = ptv3_model(data_dict)
 
