@@ -97,7 +97,10 @@ class Point(Dict):
 
         if depth is None:
             # Adaptive measure the depth of serialization cube (length = 2 ^ depth)
+            print(self.grid_coord.max())
+            print(int(self.grid_coord.max()))
             depth = int(self.grid_coord.max()).bit_length()
+            print(depth)
         self["serialized_depth"] = depth
         # Maximum bit length for serialization code is 63 (int64)
         assert depth * 3 + len(self.offset).bit_length() <= 63
