@@ -319,7 +319,7 @@ if __name__ == "__main__":
 
     print(coords.shape)
 
-    data_dict = {'batch': batches.cuda().float(), 'feat': norms.flatten(end_dim=1).cuda().float(), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().float(), 'labels': labels.flatten().cuda().float(), 'grid_size': 0.001}
+    data_dict = {'batch': batches.cuda().double(), 'feat': norms.flatten(end_dim=1).cuda().float(), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().float(), 'labels': labels.flatten().cuda().float(), 'grid_size': 0.001}
     results = ptv3_model(data_dict)
 
     print(results)
