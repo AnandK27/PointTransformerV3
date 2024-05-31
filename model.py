@@ -235,7 +235,7 @@ class PointSequential(PointModule):
             # Spconv module
             elif spconv.modules.is_spconv_module(module):
                 if isinstance(input, Point):
-                    input.sparse_conv_feat = module(input.sparse_conv_feat)
+                    input.sparse_conv_feat = module(input.sparse_conv_feat.to(torch.float32))
                     input.feat = input.sparse_conv_feat.features
                 else:
                     input = module(input)
