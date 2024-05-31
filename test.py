@@ -94,7 +94,7 @@ def main_worker(gpu, ngpus_per_node, test_fold):
         lr=args.base_lr,
         weight_decay=args.weight_decay
     )
-    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=args.base_lr*0.001)
+    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=args.base_lr*0.01)
     logger.info("=> Features:{}, Classes: {}".format(args.fea_dim, args.classes))
 
     logger.info("=====================> Loading data ...")
