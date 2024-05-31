@@ -165,12 +165,12 @@ def train_one_epoch(train_loader, model, optimizer):
         batches = np.tile(batches, (norms.shape[1], 1)).T.flatten()
         batches = torch.tensor(batches).long()
 
-        data_dict = {'batch': batches.cuda(), 'feat': norms.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda().to(torch.float32), 'grid_size': torch.tensor(0.001).to(torch.float32)}
+        data_dict = {'batch': batches.cuda(), 'feat': norms.flatten(end_dim=1).cuda().to(torch.float64), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float64), 'labels': labels.flatten().cuda().to(torch.float64), 'grid_size': torch.tensor(0.001).to(torch.float64)}
         results = model(data_dict)
 
         #pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
-        loss_seg = F.cross_entropy(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float32), weight=train_loader.dataset.segweights.cuda())
+        loss_seg = F.cross_entropy(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float64), weight=train_loader.dataset.segweights.cuda())
         # loss_seg_refine = F.cross_entropy(seg_refine_preds, gts, weight=train_loader.dataset.segweights.cuda())
         # loss_edge = F.cross_entropy(edge_preds, egts, weight=eweights)
         # loss_contra = get_contra_loss(egts, gts, seg_embed, gmatrix, num_class=args.classes, temp=args.temp)
@@ -220,7 +220,7 @@ def val_one_epoch(val_loader, model):
 
                 # pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
                 # seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
-                loss_seg = F.cross_entropy(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float32), weight=val_loader.dataset.segweights.cuda())
+                loss_seg = F.cross_entropy(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float64), weight=val_loader.dataset.segweights.cuda())
                 #loss_seg_refine = F.cross_entropy(seg_refine_preds, gts, weight=val_loader.dataset.segweights.cuda())
                 # loss_edge = F.cross_entropy(edge_preds, egts, weight=eweights)
                 # loss_contra = get_contra_loss(egts, gts, seg_embed, gmatrix, num_class=args.classes, temp=args.temp)
