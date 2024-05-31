@@ -181,7 +181,7 @@ def train_one_epoch(train_loader, model, optimizer):
         # loss_seg_refine_avg += loss_seg_refine.item()
         # loss_edge_avg += loss_edge.item()
         # loss_contra_avg += loss_contra.item()
-        iou_list.append(cal_IoU_Acc_batch(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float32)))
+        iou_list.append(cal_IoU_Acc_batch(results['feat'][:,None], labels.flatten(end_dim=1).cuda()))
         # iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, gts))
 
         optimizer.zero_grad()
@@ -231,7 +231,7 @@ def val_one_epoch(val_loader, model):
                 # loss_seg_refine_avg += loss_seg_refine.item()
                 # loss_edge_avg += loss_edge.item()
                 # loss_contra_avg += loss_contra.item()
-                iou_avg.append(cal_IoU_Acc_batch(results['feat'], labels.flatten(end_dim=1).cuda().to(torch.float32)))
+                iou_avg.append(cal_IoU_Acc_batch(results['feat'][:,None], labels.flatten(end_dim=1).cuda().to(torch.float32)))
                 # iou_refine_avg.append(cal_IoU_Acc_batch(seg_refine_preds, gts))
 
             dataset_len = len(val_loader.dataset)
