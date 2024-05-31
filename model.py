@@ -963,7 +963,7 @@ class PointTransformerV3(PointModule):
                     )
                 self.dec.add(module=dec, name=f"dec{s}")
 
-        self.linear = nn.Linear(dec_channels[0], 2)
+        self.linear = nn.Linear(dec_channels[0], 3)
 
     def forward(self, data_dict):
         """
