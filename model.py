@@ -963,6 +963,8 @@ class PointTransformerV3(PointModule):
                     )
                 self.dec.add(module=dec, name=f"dec{s}")
 
+        self.linear = nn.Linear(dec_channels[0], 2)
+
     def forward(self, data_dict):
         """
         A data_dict is a dictionary containing properties of a batched point cloud.
@@ -979,4 +981,6 @@ class PointTransformerV3(PointModule):
         point = self.enc(point)
         if not self.cls_mode:
             point = self.dec(point)
+
+        point.feat = self.linear(point.feat)
         return point
