@@ -151,18 +151,18 @@ class PTV3_EPT(PointTransformerV3):
         point = self.embedding(point)
         point = self.enc(point)
         if not self.cls_mode:
-            point = self.dec(point)
+            point_seg = self.dec(point)
             point_edge = self.edge_dec(point)
 
-        point_feat = self.seg_fc(point.feat)
+        point_feat = self.seg_fc(point_seg.feat)
         point_edge_feat = self.edge_fc(point_edge.feat)
 
-        seg_refine_features = self.BFM(point.feat.reshape(batch_size, num_points, -1), point_edge_feat.reshape(batch_size, num_points, -1), gmatrix, idxs)
+        seg_refine_features = self.BFM(point_seg.feat.reshape(batch_size, num_points, -1), point_edge_feat.reshape(batch_size, num_points, -1), gmatrix, idxs)
         seg_refine_preds = self.seg_refine_fc(seg_refine_features.transpose(1, 2).contiguous())
 
-        seg_embed = F.normalize(self.proj_layer(point.feat), p=2, dim=1)
+        seg_embed = F.normalize(self.proj_layer(point_seg.feat), p=2, dim=1)
 
-        return point, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat
+        return point_seg, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat
 
 
 
