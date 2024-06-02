@@ -68,52 +68,52 @@ class PTV3_EPT(PointTransformerV3):
         ln_layer = nn.LayerNorm
 
         if not self.cls_mode:
-            dec_drop_path = [
-                x.item() for x in torch.linspace(0, drop_path, sum(dec_depths))
-            ]
-            self.edge_dec = PointSequential()
-            dec_channels = list(dec_channels) + [enc_channels[-1]]
-            for s in reversed(range(self.num_stages - 1)):
-                dec_drop_path_ = dec_drop_path[
-                    sum(dec_depths[:s]) : sum(dec_depths[: s + 1])
-                ]
-                dec_drop_path_.reverse()
-                dec = PointSequential()
-                dec.add(
-                    SerializedUnpooling(
-                        in_channels=dec_channels[s + 1],
-                        skip_channels=enc_channels[s],
-                        out_channels=dec_channels[s],
-                        norm_layer=bn_layer,
-                        act_layer=act_layer,
-                    ),
-                    name="up",
-                )
-                for i in range(dec_depths[s]):
-                    dec.add(
-                        Block(
-                            channels=dec_channels[s],
-                            num_heads=dec_num_head[s],
-                            patch_size=dec_patch_size[s],
-                            mlp_ratio=mlp_ratio,
-                            qkv_bias=qkv_bias,
-                            qk_scale=qk_scale,
-                            attn_drop=attn_drop,
-                            proj_drop=proj_drop,
-                            drop_path=dec_drop_path_[i],
-                            norm_layer=ln_layer,
-                            act_layer=act_layer,
-                            pre_norm=pre_norm,
-                            order_index=i % len(self.order),
-                            cpe_indice_key=f"stage{s}",
-                            enable_rpe=enable_rpe,
-                            enable_flash=enable_flash,
-                            upcast_attention=upcast_attention,
-                            upcast_softmax=upcast_softmax,
-                        ),
-                        name=f"block{i}",
-                    )
-                self.edge_dec.add(module=dec, name=f"dec{s}")
+            # dec_drop_path = [
+            #     x.item() for x in torch.linspace(0, drop_path, sum(dec_depths))
+            # ]
+            # self.edge_dec = PointSequential()
+            # dec_channels = list(dec_channels) + [enc_channels[-1]]
+            # for s in reversed(range(self.num_stages - 1)):
+            #     dec_drop_path_ = dec_drop_path[
+            #         sum(dec_depths[:s]) : sum(dec_depths[: s + 1])
+            #     ]
+            #     dec_drop_path_.reverse()
+            #     dec = PointSequential()
+            #     dec.add(
+            #         SerializedUnpooling(
+            #             in_channels=dec_channels[s + 1],
+            #             skip_channels=enc_channels[s],
+            #             out_channels=dec_channels[s],
+            #             norm_layer=bn_layer,
+            #             act_layer=act_layer,
+            #         ),
+            #         name="up",
+            #     )
+            #     for i in range(dec_depths[s]):
+            #         dec.add(
+            #             Block(
+            #                 channels=dec_channels[s],
+            #                 num_heads=dec_num_head[s],
+            #                 patch_size=dec_patch_size[s],
+            #                 mlp_ratio=mlp_ratio,
+            #                 qkv_bias=qkv_bias,
+            #                 qk_scale=qk_scale,
+            #                 attn_drop=attn_drop,
+            #                 proj_drop=proj_drop,
+            #                 drop_path=dec_drop_path_[i],
+            #                 norm_layer=ln_layer,
+            #                 act_layer=act_layer,
+            #                 pre_norm=pre_norm,
+            #                 order_index=i % len(self.order),
+            #                 cpe_indice_key=f"stage{s}",
+            #                 enable_rpe=enable_rpe,
+            #                 enable_flash=enable_flash,
+            #                 upcast_attention=upcast_attention,
+            #                 upcast_softmax=upcast_softmax,
+            #             ),
+            #             name=f"block{i}",
+            #         )
+            #     self.edge_dec.add(module=dec, name=f"dec{s}")
 
             self.edge_fc = nn.Sequential(
                 nn.Linear(dec_channels[0], dec_channels[0], bias=False),
@@ -152,19 +152,18 @@ class PTV3_EPT(PointTransformerV3):
         point = self.embedding(point)
         point = self.enc(point)
         if not self.cls_mode:
-            point_clone = copy.deepcopy(point)
             point_seg = self.dec(point)
-            point_edge = self.edge_dec(point_clone)
+            #point_edge = self.edge_dec(point_clone)
 
         point_feat = self.seg_fc(point_seg.feat)
-        point_edge_feat = self.edge_fc(point_edge.feat)
+        point_edge_feat = self.edge_fc(point_seg.feat)
 
         seg_refine_features = self.BFM(point_seg.feat.reshape(batch_size, num_points, -1), point_edge_feat.reshape(batch_size, num_points, -1), gmatrix, idxs)
         seg_refine_preds = self.seg_refine_fc(seg_refine_features.transpose(1, 2).contiguous())
 
         seg_embed = F.normalize(self.proj_layer(point_seg.feat), p=2, dim=1)
 
-        return point_seg, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat
+        return point_seg, None, seg_refine_preds, seg_embed, point_edge_feat, point_feat
 
 
 
