@@ -151,8 +151,9 @@ class PTV3_EPT(PointTransformerV3):
         point = self.embedding(point)
         point = self.enc(point)
         if not self.cls_mode:
+            point_clone = point.clone()
             point_seg = self.dec(point)
-            point_edge = self.edge_dec(point)
+            point_edge = self.edge_dec(point_clone)
 
         point_feat = self.seg_fc(point_seg.feat)
         point_edge_feat = self.edge_fc(point_edge.feat)
