@@ -229,7 +229,7 @@ def main_worker(gpu, ngpus_per_node, test_fold):
     else:
         raise Exception('architecture {} not supported yet'.format(args.arch))
     #model = Model(args=args).cuda()
-    model = PointTransformerV3().cuda()
+    model = PTV3_EPT().cuda()
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=args.base_lr,
