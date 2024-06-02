@@ -136,7 +136,7 @@ class PTV3_EPT(PointTransformerV3):
 
         self.BFM = BFM_torch(dec_channels[0], dec_channels[0], args.n_neighbors)
 
-    def forward(self, data_dict, gmatrix, idxs):
+    def forward(self, data_dict, gmatrix, idxs, batch_size=8, num_points=512):
         """
         A data_dict is a dictionary containing properties of a batched point cloud.
         It should contain the following properties for PTv3:
@@ -157,7 +157,7 @@ class PTV3_EPT(PointTransformerV3):
         point_feat = self.seg_fc(point.feat)
         point_edge_feat = self.edge_fc(point_edge.feat)
 
-        seg_refine_features = self.BFM(point.feat, point_edge_feat, gmatrix, idxs)
+        seg_refine_features = self.BFM(point.feat.reshape(batch_size, num_points, -1), point_edge_feat.reshape(batch_size, num_points, -1), gmatrix, idxs)
         seg_refine_preds = self.seg_refine_fc(seg_refine_features.transpose(1, 2).contiguous())
 
         seg_embed = F.normalize(self.proj_layer(point.feat), p=2, dim=1)
@@ -301,29 +301,29 @@ def train_one_epoch(train_loader, model, optimizer):
 
     loss_avg, loss_seg_avg, loss_seg_refine_avg, loss_edge_avg, loss_contra_avg = 0.0, 0.0, 0.0, 0.0, 0.0
     iou_list, iou_refine_list = [], []
-    for batch_i, (norms, coords, labels, g_mat, idxs) in enumerate(train_loader):
-        batches = np.arange(norms.shape[0])
-        batches = np.tile(batches, (norms.shape[1], 1)).T.flatten()
+    for batch_i, (coords, labels, edge_labels, eweights, g_mat, idxs) in enumerate(train_loader):
+        batches = np.arange(coords.shape[0])
+        batches = np.tile(batches, (coords.shape[1], 1)).T.flatten()
         batches = torch.tensor(batches).long()
 
         data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
-        results = model(data_dict)
+        results, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat = model(data_dict, g_mat.cuda(), idxs, batch_size = labels.shape[0], num_points = labels.shape[1])
 
         #pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
-        loss_seg = F.cross_entropy(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
-        # loss_seg_refine = F.cross_entropy(seg_refine_preds, gts, weight=train_loader.dataset.segweights.cuda())
-        # loss_edge = F.cross_entropy(edge_preds, egts, weight=eweights)
-        # loss_contra = get_contra_loss(egts, gts, seg_embed, gmatrix, num_class=args.classes, temp=args.temp)
-        # loss = loss_seg + args.weight_refine * loss_seg_refine + args.weight_edge * loss_edge + args.weight_contra * loss_contra
-        loss =  loss_seg
+        loss_seg = F.cross_entropy(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
+        loss_seg_refine = F.cross_entropy(seg_refine_preds, results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
+        loss_edge = F.cross_entropy(point_edge_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), edge_labels, weight=eweights)
+        loss_contra = get_contra_loss(edge_labels, labels, seg_embed, g_mat, num_class=args.classes, temp=args.temp)
+        loss = loss_seg + args.weight_refine * loss_seg_refine + args.weight_edge * loss_edge + args.weight_contra * loss_contra
+
         loss_avg += loss.item()
         loss_seg_avg += loss_seg.item()
-        # loss_seg_refine_avg += loss_seg_refine.item()
-        # loss_edge_avg += loss_edge.item()
-        # loss_contra_avg += loss_contra.item()
-        iou_list.append(cal_IoU_Acc_batch(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1])))
-        # iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, gts))
+        loss_seg_refine_avg += loss_seg_refine.item()
+        loss_edge_avg += loss_edge.item()
+        loss_contra_avg += loss_contra.item()
+        iou_list.append(cal_IoU_Acc_batch(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1])))
+        iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, labels))
 
         optimizer.zero_grad()
         loss_seg.backward()

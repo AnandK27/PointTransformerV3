@@ -167,15 +167,10 @@ def train_one_epoch(train_loader, model, optimizer):
 
         data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
         results = model(data_dict)
-        print(results)
-        print(results['feat'].shape)
-        print(results['labels'].shape)
-        print(results.keys())
-        exit()
 
         #pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
-        loss_seg = F.cross_entropy(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
+        loss_seg = F.cross_entropy(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), labels, weight=train_loader.dataset.segweights.cuda())
         # loss_seg_refine = F.cross_entropy(seg_refine_preds, gts, weight=train_loader.dataset.segweights.cuda())
         # loss_edge = F.cross_entropy(edge_preds, egts, weight=eweights)
         # loss_contra = get_contra_loss(egts, gts, seg_embed, gmatrix, num_class=args.classes, temp=args.temp)
@@ -186,7 +181,7 @@ def train_one_epoch(train_loader, model, optimizer):
         # loss_seg_refine_avg += loss_seg_refine.item()
         # loss_edge_avg += loss_edge.item()
         # loss_contra_avg += loss_contra.item()
-        iou_list.append(cal_IoU_Acc_batch(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1])))
+        iou_list.append(cal_IoU_Acc_batch(results['feat'].reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), labels))
         # iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, gts))
 
         optimizer.zero_grad()
