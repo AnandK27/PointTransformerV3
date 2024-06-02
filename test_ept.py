@@ -123,7 +123,7 @@ class PTV3_EPT(PointTransformerV3):
             )
         self.seg_refine_fc = nn.Sequential(
             nn.Linear(dec_channels[0], dec_channels[0], bias=False),
-            bn_layer(dec_channels[0]),
+            bn_layer(args.sample_points),
             act_layer(),
             nn.Linear(dec_channels[0], 2),
         )
