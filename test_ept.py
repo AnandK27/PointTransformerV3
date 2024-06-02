@@ -5,6 +5,7 @@ import numpy as np
 import logging
 import argparse
 import shutil
+import copy
 
 import torch
 from torch.utils.data import DataLoader
@@ -151,7 +152,7 @@ class PTV3_EPT(PointTransformerV3):
         point = self.embedding(point)
         point = self.enc(point)
         if not self.cls_mode:
-            point_clone = point.clone()
+            point_clone = copy.deepcopy(point)
             point_seg = self.dec(point)
             point_edge = self.edge_dec(point_clone)
 
