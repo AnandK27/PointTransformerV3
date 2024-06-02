@@ -168,7 +168,6 @@ def train_one_epoch(train_loader, model, optimizer):
         data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
         results = model(data_dict)
 
-        print(torch.all(labels.flatten().cuda() == results['labels'].flatten()))
 
         #pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
