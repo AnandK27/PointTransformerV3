@@ -160,9 +160,9 @@ def train_one_epoch(train_loader, model, optimizer):
 
     loss_avg, loss_seg_avg, loss_seg_refine_avg, loss_edge_avg, loss_contra_avg = 0.0, 0.0, 0.0, 0.0, 0.0
     iou_list, iou_refine_list = [], []
-    for batch_i, (norms, coords, labels, g_mat, idxs) in enumerate(train_loader):
-        batches = np.arange(norms.shape[0])
-        batches = np.tile(batches, (norms.shape[1], 1)).T.flatten()
+    for batch_i, (coords, labels, edge_labels, eweights, g_mat, idxs) in enumerate(train_loader):
+        batches = np.arange(coords.shape[0])
+        batches = np.tile(batches, (coords.shape[1], 1)).T.flatten()
         batches = torch.tensor(batches).long()
 
         data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
