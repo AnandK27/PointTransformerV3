@@ -171,6 +171,7 @@ def train_one_epoch(train_loader, model, optimizer):
         print(results['feat'].shape)
         print(results['labels'].shape)
         print(results.keys())
+        exit()
 
         #pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
