@@ -314,7 +314,7 @@ def train_one_epoch(train_loader, model, optimizer):
         #seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
         loss_seg = F.cross_entropy(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
         loss_seg_refine = F.cross_entropy(seg_refine_preds, results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
-        loss_edge = F.cross_entropy(point_edge_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), edge_labels, weight=eweights)
+        loss_edge = F.cross_entropy(point_edge_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), edge_labels.cuda(), weight=eweights)
         loss_contra = get_contra_loss(edge_labels, labels, seg_embed, g_mat, num_class=args.classes, temp=args.temp)
         loss = loss_seg + args.weight_refine * loss_seg_refine + args.weight_edge * loss_edge + args.weight_contra * loss_contra
 
@@ -324,7 +324,7 @@ def train_one_epoch(train_loader, model, optimizer):
         loss_edge_avg += loss_edge.item()
         loss_contra_avg += loss_contra.item()
         iou_list.append(cal_IoU_Acc_batch(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1])))
-        iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, labels))
+        iou_refine_list.append(cal_IoU_Acc_batch(seg_refine_preds, labels.cuda()))
 
         optimizer.zero_grad()
         loss_seg.backward()
@@ -361,9 +361,9 @@ def val_one_epoch(val_loader, model):
                 results, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat = model(data_dict, g_mat.cuda(), idxs, batch_size = labels.shape[0], num_points = labels.shape[1])
                     # pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
                 # seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
-                loss_seg = F.cross_entropy(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
-                loss_seg_refine = F.cross_entropy(seg_refine_preds, results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=train_loader.dataset.segweights.cuda())
-                loss_edge = F.cross_entropy(point_edge_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), edge_labels, weight=eweights)
+                loss_seg = F.cross_entropy(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=val_loader.dataset.segweights.cuda())
+                loss_seg_refine = F.cross_entropy(seg_refine_preds, results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=val_loader.dataset.segweights.cuda())
+                loss_edge = F.cross_entropy(point_edge_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), edge_labels.cuda(), weight=eweights)
                 loss_contra = get_contra_loss(edge_labels, labels, seg_embed, g_mat, num_class=args.classes, temp=args.temp)
                 loss = loss_seg + args.weight_refine * loss_seg_refine + args.weight_edge * loss_edge + args.weight_contra * loss_contra
 
@@ -373,7 +373,7 @@ def val_one_epoch(val_loader, model):
                 loss_edge_avg += loss_edge.item()
                 loss_contra_avg += loss_contra.item()
                 iou_avg.append(cal_IoU_Acc_batch(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1])))
-                iou_refine_avg.append(cal_IoU_Acc_batch(seg_refine_preds, labels))
+                iou_refine_avg.append(cal_IoU_Acc_batch(seg_refine_preds, labels.cuda()))
 
 
             dataset_len = len(val_loader.dataset)
