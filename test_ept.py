@@ -159,7 +159,7 @@ class PTV3_EPT(PointTransformerV3):
         point_edge_pred = self.edge_fc(point_seg.feat)
 
         seg_refine_features = self.BFM(point_seg.feat.reshape(batch_size, num_points, -1).transpose(1, 2), point_edge_pred.reshape(batch_size, num_points, -1).transpose(1, 2), gmatrix, idxs)
-        seg_refine_preds = self.seg_refine_fc(seg_refine_features.transpose(1, 2).contiguous())
+        seg_refine_preds = self.seg_refine_fc(seg_refine_features.contiguous()).transpose(1, 2)
 
         seg_embed = F.normalize(self.proj_layer(point_seg.feat), p=2, dim=1)
 
