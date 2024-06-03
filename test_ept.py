@@ -150,6 +150,7 @@ class PTV3_EPT(PointTransformerV3):
         point.sparsify()
 
         if timeit:
+            torch.cuda.synchronize()
             start = time.time()
         point = self.embedding(point)
         point = self.enc(point)
@@ -165,6 +166,7 @@ class PTV3_EPT(PointTransformerV3):
 
         seg_embed = F.normalize(self.proj_layer(point_seg.feat), p=2, dim=1).reshape(batch_size, num_points, -1).transpose(1, 2)
         if timeit:
+            torch.cuda.synchronize()
             time_taken = time.time() - start
             return point_seg, None, seg_refine_preds, seg_embed, point_edge_pred, point_pred, time_taken
 
