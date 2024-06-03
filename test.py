@@ -247,6 +247,8 @@ def val_one_epoch(val_loader, model):
             dataset_len = len(val_loader.dataset)
             loss_avg_list.append(loss_avg / dataset_len)
             loss_seg_avg_list.append(loss_seg_avg / dataset_len)
+            if args.record_time:
+                time_avg /= dataset_len
             # loss_seg_refine_avg_list.append(loss_seg_refine_avg / dataset_len)
             # loss_edge_avg_list.append(loss_edge_avg / dataset_len)
             # loss_contra_avg_list.append(loss_contra_avg / dataset_len)
@@ -260,7 +262,7 @@ def val_one_epoch(val_loader, model):
     # record['loss_edge'] = np.mean(loss_edge_avg_list)
     # record['loss_contra'] = np.mean(loss_contra_avg_list)
     if args.record_time:
-        record['time'] = time_avg / len(val_loader)
+        record['time'] = time_avg
     record['iou_list'] = torch.stack(iou_avg_list, dim=0).mean(dim=0)
     # record['iou_refine_list'] = torch.stack(iou_refine_avg_list, dim=0).mean(dim=0)
     return record

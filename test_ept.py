@@ -237,7 +237,7 @@ def main_worker(gpu, ngpus_per_node, test_fold):
     else:
         raise Exception('architecture {} not supported yet'.format(args.arch))
     #model = Model(args=args).cuda()
-    model = PTV3_EPT(enc_patch_size=[args.sample_points] * 4, dec_patch_size=[args.sample_points] * 3,args=args).cuda()
+    model = PTV3_EPT(enc_patch_size=[args.npoints] * 4, dec_patch_size=[args.npoints] * 3,args=args).cuda()
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=args.base_lr,
@@ -393,6 +393,8 @@ def val_one_epoch(val_loader, model):
 
 
             dataset_len = len(val_loader.dataset)
+            if args.record_time:
+                time_avg /= dataset_len
             loss_avg_list.append(loss_avg / dataset_len)
             loss_seg_avg_list.append(loss_seg_avg / dataset_len)
             loss_seg_refine_avg_list.append(loss_seg_refine_avg / dataset_len)
@@ -410,7 +412,7 @@ def val_one_epoch(val_loader, model):
     record['iou_list'] = torch.stack(iou_avg_list, dim=0).mean(dim=0)
     record['iou_refine_list'] = torch.stack(iou_refine_avg_list, dim=0).mean(dim=0)
     if args.record_time:
-        record['time_avg'] = time_avg / len(val_loader)
+        record['time_avg'] = time_avg
     return record
 
 
