@@ -984,6 +984,7 @@ class PointTransformerV3(PointModule):
         point.serialization(order=self.order, shuffle_orders=self.shuffle_orders)
         point.sparsify()
         if timeit:
+            torch.cuda.synchronize()
             start = time.time()
 
         point = self.embedding(point)
@@ -993,6 +994,7 @@ class PointTransformerV3(PointModule):
 
         point.feat = self.seg_fc(point.feat)
         if timeit:
+            torch.cuda.synchronize()
             time_taken = time.time() - start
             return point, time_taken
         return point
