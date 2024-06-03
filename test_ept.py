@@ -137,7 +137,7 @@ class PTV3_EPT(PointTransformerV3):
 
         self.BFM = BFM_torch(dec_channels[0], dec_channels[0], args.n_neighbors)
 
-    def forward(self, data_dict, gmatrix, idxs, batch_size=8, num_points=512):
+    def forward(self, data_dict, gmatrix, idxs, batch_size=8, num_points=512, timeit=False):
         """
         A data_dict is a dictionary containing properties of a batched point cloud.
         It should contain the following properties for PTv3:
@@ -149,6 +149,8 @@ class PTV3_EPT(PointTransformerV3):
         point.serialization(order=self.order, shuffle_orders=self.shuffle_orders)
         point.sparsify()
 
+        if timeit:
+            start = time.time()
         point = self.embedding(point)
         point = self.enc(point)
         if not self.cls_mode:
@@ -162,6 +164,9 @@ class PTV3_EPT(PointTransformerV3):
         seg_refine_preds = self.seg_refine_fc(seg_refine_features.contiguous()).transpose(1, 2)
 
         seg_embed = F.normalize(self.proj_layer(point_seg.feat), p=2, dim=1).reshape(batch_size, num_points, -1).transpose(1, 2)
+        if timeit:
+            time_taken = time.time() - start
+            return point_seg, None, seg_refine_preds, seg_embed, point_edge_pred, point_pred, time_taken
 
         return point_seg, None, seg_refine_preds, seg_embed, point_edge_pred, point_pred
 
@@ -364,10 +369,10 @@ def val_one_epoch(val_loader, model):
                 data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
                 g_mat = g_mat.cuda()
                 if args.record_time:
-                    start_time = time.time()
-                results, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat = model(data_dict, g_mat, idxs, batch_size = labels.shape[0], num_points = labels.shape[1])
-                if args.record_time:
-                    time_avg += time.time() - start_time
+                    results, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat, time_taken = model(data_dict, g_mat, idxs, batch_size = labels.shape[0], num_points = labels.shape[1], timeit = args.record_time)
+                    time_avg += time_taken
+                else:
+                    results, point_edge, seg_refine_preds, seg_embed, point_edge_feat, point_feat = model(data_dict, g_mat, idxs, batch_size = labels.shape[0], num_points = labels.shape[1])
                     # pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
                 # seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
                 loss_seg = F.cross_entropy(point_feat.reshape(labels.shape[0],labels.shape[1], -1).permute(0,2,1), results['labels'].reshape(labels.shape[0],labels.shape[1]), weight=val_loader.dataset.segweights.cuda())
