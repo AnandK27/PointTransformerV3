@@ -143,6 +143,9 @@ def main_worker(gpu, ngpus_per_node, test_fold):
             torch.save({'epoch': epoch, 'state_dict' : model.state_dict(), 'optimizer': optimizer.state_dict(), 
                         'scheduler': scheduler.state_dict(), 'best_miou': best_miou, 
                         'best_viou': best_iou_list[0], 'best_aiou': best_iou_list[1]}, filename)
+            if args.record_time:
+                logger.info('Epoch{}: time is {:.4f}'.format(epoch, record_val['time']))
+                
             if is_best:
                 logger.info('Epoch{}: best validation mIoU updated to {:.4f}, vIoU is {:.4f} and aIoU is {:.4f}'.format(
                     epoch, best_miou, best_iou_list[0], best_iou_list[1]))
@@ -210,6 +213,8 @@ def val_one_epoch(val_loader, model):
     for i in range(args.num_votes):
         loss_avg, loss_seg_avg, loss_seg_refine_avg, loss_edge_avg, loss_contra_avg = 0.0, 0.0, 0.0, 0.0, 0.0
         iou_avg, iou_refine_avg = [], []
+        if args.record_time:
+            time_avg = 0.0
         with torch.no_grad():
             for batch_idx, (coords, labels, edge_labels, eweights, g_mat, idxs) in enumerate(val_loader):
                 batches = np.arange(coords.shape[0])
@@ -217,7 +222,11 @@ def val_one_epoch(val_loader, model):
                 batches = torch.tensor(batches).long()
 
                 data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
+                if args.record_time:
+                    start = time.time()
                 results = model(data_dict)
+                if args.record_time:
+                    time_avg += time.time() - start
 
                 # pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
                 # seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)
@@ -251,6 +260,8 @@ def val_one_epoch(val_loader, model):
     # record['loss_seg_refine'] = np.mean(loss_seg_refine_avg_list)
     # record['loss_edge'] = np.mean(loss_edge_avg_list)
     # record['loss_contra'] = np.mean(loss_contra_avg_list)
+    if args.record_time:
+        record['time'] = time_avg / len(val_loader)
     record['iou_list'] = torch.stack(iou_avg_list, dim=0).mean(dim=0)
     # record['iou_refine_list'] = torch.stack(iou_refine_avg_list, dim=0).mean(dim=0)
     return record
