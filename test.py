@@ -145,7 +145,7 @@ def main_worker(gpu, ngpus_per_node, test_fold):
                         'best_viou': best_iou_list[0], 'best_aiou': best_iou_list[1]}, filename)
             if args.record_time:
                 logger.info('Epoch{}: time is {:.4f}'.format(epoch, record_val['time']))
-                
+
             if is_best:
                 logger.info('Epoch{}: best validation mIoU updated to {:.4f}, vIoU is {:.4f} and aIoU is {:.4f}'.format(
                     epoch, best_miou, best_iou_list[0], best_iou_list[1]))
@@ -222,11 +222,10 @@ def val_one_epoch(val_loader, model):
                 batches = torch.tensor(batches).long()
 
                 data_dict = {'batch': batches.cuda(), 'feat': coords.flatten(end_dim=1).cuda().to(torch.float32), 'coord': coords.flatten(end_dim=1)[:,0:3].cuda().to(torch.float32), 'labels': labels.flatten().cuda(), 'grid_size': torch.tensor(0.0001).to(torch.float32)}
+
+                results, time_taken = model(data_dict, timeit=args.record_time)
                 if args.record_time:
-                    start = time.time()
-                results = model(data_dict)
-                if args.record_time:
-                    time_avg += time.time() - start
+                    time_avg += time_taken
 
                 # pts, gts, egts, eweights, gmatrix = pts.cuda(), gts.cuda(), egts.cuda(), eweights.mean(dim=0).cuda(), gmatrix.cuda()
                 # seg_preds, seg_refine_preds, seg_embed, edge_preds = model(pts, gmatrix, idxs)

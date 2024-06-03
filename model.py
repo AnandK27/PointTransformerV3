@@ -8,6 +8,7 @@ Please cite our work if the code is helpful to you.
 
 import sys
 from functools import partial
+import time
 from addict import Dict
 import math
 import torch
@@ -970,7 +971,7 @@ class PointTransformerV3(PointModule):
             nn.Linear(dec_channels[0], 2),
         )
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, timeit=False):
         """
         A data_dict is a dictionary containing properties of a batched point cloud.
         It should contain the following properties for PTv3:
@@ -979,8 +980,12 @@ class PointTransformerV3(PointModule):
         3. "offset" or "batch": https://github.com/Pointcept/Pointcept?tab=readme-ov-file#offset
         """
         point = Point(data_dict)
+
         point.serialization(order=self.order, shuffle_orders=self.shuffle_orders)
         point.sparsify()
+        if timeit:
+            torch.cuda.synchronize()
+            start = time.time()
 
         point = self.embedding(point)
         point = self.enc(point)
@@ -988,4 +993,8 @@ class PointTransformerV3(PointModule):
             point = self.dec(point)
 
         point.feat = self.seg_fc(point.feat)
+        if timeit:
+            torch.cuda.synchronize()
+            time_taken = time.time() - start
+            return point, time_taken
         return point
